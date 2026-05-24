@@ -69,7 +69,7 @@ You'll paste these 3 Price IDs into `server/.env` in the next step.
    STRIPE_PRICE_BASIC=price_YOUR_BASIC_PRICE_ID
    STRIPE_PRICE_PREMIUM=price_YOUR_PREMIUM_PRICE_ID
    STRIPE_PRICE_EXTREME=price_YOUR_EXTREME_PRICE_ID
-   CLIENT_URL=http://localhost:5173
+   CLIENT_URL=https://your-vercel-site.vercel.app
    PORT=3001
    ```
 
@@ -92,7 +92,7 @@ Webhooks let Stripe notify your backend when payments succeed, subscriptions cha
    ```
 3. Forward events to your local server:
    ```
-   stripe listen --forward-to localhost:3001/api/webhook
+   stripe listen --forward-to https://yojaz-elite.onrender.com/api/webhook
    ```
 4. The CLI will print a webhook signing secret like `whsec_...`
 5. Copy that value into `server/.env` as `STRIPE_WEBHOOK_SECRET=whsec_...`
@@ -117,7 +117,7 @@ Webhooks let Stripe notify your backend when payments succeed, subscriptions cha
    ```
    cp .env.example .env
    ```
-2. The default `VITE_API_URL=http://localhost:3001` is correct for local development.
+2. The default `VITE_API_URL=https://yojaz-elite.onrender.com` is correct for local development.
 3. For production, change it to your deployed backend URL:
    ```
    VITE_API_URL=https://api.yourdomain.com
@@ -135,7 +135,7 @@ npm run dev
 
 You should see:
 ```
-YoJaz Elite backend running on http://localhost:3001
+YoJaz Elite backend running on https://yojaz-elite.onrender.com
 Stripe mode: TEST
 ```
 
@@ -152,7 +152,7 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+Open [https://your-vercel-site.vercel.app](https://your-vercel-site.vercel.app).
 
 ---
 

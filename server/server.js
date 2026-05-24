@@ -13,7 +13,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const app = express()
 const PORT = process.env.PORT || 3001
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173'
+const CLIENT_URL = process.env.CLIENT_URL || 'https://your-vercel-site.vercel.app'
 
 // ─── Simple JSON file "database" ─────────────────────────────────────────────
 // Stores { [userId]: { stripeCustomerId, tier, status } }
@@ -337,6 +337,6 @@ app.post('/api/webhook', (req, res) => {
 
 // ─── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`\nYoJaz Elite backend running on http://localhost:${PORT}`)
+  console.log(`\nYoJaz Elite backend running on https://yojaz-elite.onrender.com)
   console.log(`Stripe mode: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST'}\n`)
 })

@@ -52,6 +52,12 @@ app.use(cors({
 }))
 app.options('*', cors())
 
+// Log every request so Render logs show what's being hit
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} origin=${req.headers.origin || 'none'}`)
+  next()
+})
+
 // Webhook route needs raw body — must be registered BEFORE express.json()
 app.use('/api/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())

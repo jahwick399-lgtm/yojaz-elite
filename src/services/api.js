@@ -1,24 +1,35 @@
-// All calls to the Stripe backend go through this module.
-// Set VITE_API_URL in your .env to point at the backend server.
-
-const BASE =
-  import.meta.env.VITE_API_URL ||
-  'https://yojaz-elite.onrender.com'
+const BASE = 'https://yojaz-elite.onrender.com'
 
 async function post(path, body) {
-  const res = await fetch(`${BASE}${path}`, {
+  const url = `${BASE}${path}`
+  console.log('[api] POST', url)
+  const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  const data = await res.json()
+  const text = await res.text()
+  console.log('[api] response status:', res.status, 'body:', text.slice(0, 200))
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error(`Server returned non-JSON (${res.status}): ${text.slice(0, 150)}`)
+  }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
   return data
 }
 
 async function get(path) {
-  const res = await fetch(`${BASE}${path}`)
-  const data = await res.json()
+  const url = `${BASE}${path}`
+  const res = await fetch(url)
+  const text = await res.text()
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch {
+    throw new Error(`Server returned non-JSON (${res.status}): ${text.slice(0, 150)}`)
+  }
   if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`)
   return data
 }

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
+import { ThemeProvider } from '@/context/ThemeContext'
 
 import LandingPage from '@/pages/LandingPage'
 import LoginPage from '@/pages/LoginPage'
@@ -16,6 +17,17 @@ import ProfilePage from '@/pages/ProfilePage'
 import AdminPage from '@/pages/AdminPage'
 import SubscribePage from '@/pages/SubscribePage'
 import SubscribeSuccessPage from '@/pages/SubscribeSuccessPage'
+import OnboardingPage from '@/pages/OnboardingPage'
+import ChallengePage from '@/pages/ChallengePage'
+import SessionTimerPage from '@/pages/SessionTimerPage'
+import JournalPage from '@/pages/JournalPage'
+import RankedTrackerPage from '@/pages/RankedTrackerPage'
+import MentalGamePage from '@/pages/MentalGamePage'
+import TournamentPrepPage from '@/pages/TournamentPrepPage'
+import VODReviewPage from '@/pages/VODReviewPage'
+import KeybindsPage from '@/pages/KeybindsPage'
+import MetaPage from '@/pages/MetaPage'
+import ReferralPage from '@/pages/ReferralPage'
 import Layout from '@/components/Layout'
 import LoadingScreen from '@/components/LoadingScreen'
 
@@ -33,9 +45,6 @@ function ProtectedRoute({ children, adminOnly = false, tier = null }) {
     return <Navigate to="/dashboard" replace />
   }
 
-  // Every non-admin user must have a Stripe-confirmed subscription tier before
-  // they can access any part of the app. tier: null means signup completed but
-  // no payment has been verified yet.
   if (user.role !== 'admin' && !user.tier) {
     console.log(`[Auth] Blocked user id=${user.id} — no active subscription, redirecting to /subscribe`)
     return <Navigate to="/subscribe" replace />
@@ -52,7 +61,7 @@ function ProtectedRoute({ children, adminOnly = false, tier = null }) {
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <LoadingScreen />
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user?.tier) return <Navigate to="/dashboard" replace />
   return children
 }
 
@@ -65,12 +74,23 @@ function AppRoutes() {
       <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
       <Route path="/subscribe" element={<SubscribePage />} />
       <Route path="/subscribe/success" element={<SubscribeSuccessPage />} />
+      <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
 
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/challenges" element={<ChallengePage />} />
         <Route path="/routine" element={<RoutinePage />} />
         <Route path="/maps" element={<TrainingMapsPage />} />
         <Route path="/progress" element={<ProgressPage />} />
+        <Route path="/timer" element={<SessionTimerPage />} />
+        <Route path="/journal" element={<JournalPage />} />
+        <Route path="/ranked" element={<RankedTrackerPage />} />
+        <Route path="/mental-game" element={<MentalGamePage />} />
+        <Route path="/tournament-prep" element={<TournamentPrepPage />} />
+        <Route path="/meta" element={<MetaPage />} />
+        <Route path="/vod-review" element={<VODReviewPage />} />
+        <Route path="/keybinds" element={<KeybindsPage />} />
+        <Route path="/referral" element={<ReferralPage />} />
         <Route path="/clips" element={<ProtectedRoute tier="extreme"><ClipAnalysisPage /></ProtectedRoute>} />
         <Route path="/coach" element={<ProtectedRoute tier="extreme"><CoachPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProfilePage />} />
@@ -84,22 +104,20 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: {
-              background: '#0a0f1a',
-              color: '#e2e8f0',
-              border: '1px solid rgba(0,245,255,0.2)',
-            },
-            success: { iconTheme: { primary: '#00f5ff', secondary: '#000' } },
-            error: { iconTheme: { primary: '#ec4899', secondary: '#000' } },
-          }}
-        />
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: { background: '#0a0f1a', color: '#e2e8f0', border: '1px solid rgba(0,245,255,0.2)' },
+              success: { iconTheme: { primary: '#00f5ff', secondary: '#000' } },
+              error: { iconTheme: { primary: '#ec4899', secondary: '#000' } },
+            }}
+          />
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

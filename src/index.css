@@ -126,3 +126,42 @@
     100% { transform: translateY(100vh); }
   }
 }
+
+/* ─── Light mode ─────────────────────────────────────────────────────────────── */
+body.light {
+  background-color: #f0f4f8;
+  color: #0f172a;
+}
+body.light aside {
+  background: #ffffff !important;
+  border-color: rgba(15,23,42,0.1) !important;
+}
+body.light main {
+  background: #f0f4f8;
+}
+body.light .card-bg {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-color: rgba(15,23,42,0.1) !important;
+}
+body.light .card-bg:hover {
+  border-color: rgba(0,150,200,0.3) !important;
+  box-shadow: 0 0 20px rgba(0,150,200,0.06) !important;
+}
+body.light .text-slate-400 { color: #475569; }
+body.light .text-slate-500 { color: #64748b; }
+body.light .text-slate-300 { color: #334155; }
+body.light .text-white { color: #0f172a; }
+body.light .bg-\[#020408\] { background: #f0f4f8; }
+body.light .bg-\[#0a0f1a\] { background: #ffffff; }
+body.light .bg-\[#0d1526\] { background: #f1f5f9; }
+body.light .input-dark {
+  background: rgba(15,23,42,0.04) !important;
+  border-color: rgba(15,23,42,0.15) !important;
+  color: #0f172a !important;
+}
+body.light .input-dark::placeholder { color: #94a3b8 !important; }
+body.light select { background-color: #f8fafc !important; color: #0f172a !important; }
+body.light select option { background-color: #f8fafc !important; color: #0f172a !important; }
+body.light ::-webkit-scrollbar-track { background: #f1f5f9; }
+body.light ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+body.light ::-webkit-scrollbar-thumb:hover { background: rgba(0,150,200,0.4); }

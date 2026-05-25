@@ -3,18 +3,11 @@ const express = require('express')
 const cors = require('cors')
 const fs = require('fs')
 const path = require('path')
-
-// ─── Validation ─────────────────────────────────────────────
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.warn(
-    'WARNING: STRIPE_SECRET_KEY missing — running in demo mode'
-  )
-}
-
-const express = require('express')
-const fs = require('fs')
-const path = require('path')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.warn('WARNING: STRIPE_SECRET_KEY missing — Stripe calls will fail')
+}
 
 const app = express()
 
@@ -22,39 +15,9 @@ const PORT = process.env.PORT || 10000
 
 const CLIENT_URL =
   process.env.CLIENT_URL ||
-  'https://yojaz-elite-8iwbtepxm-jahwick399-lgtms-projects.vercel.app'
+  'https://yojaz-elite.vercel.app'
 
-app.use(express.json())
-
-// ─── API TEST ────────────────────────────────────────────────────────────────
-app.get('/api', (req, res) => {
-  res.json({
-    status: 'online',
-    message: 'YoJaz Elite API working'
-  })
-})
-
-// ─── PLANS ───────────────────────────────────────────────────────────────────
-app.get('/api/plans', (req, res) => {
-  res.json([
-    { id: 'console', name: 'Console Tweaks', price: 4.99 },
-    { id: 'pc-basic', name: 'PC Tweaks', price: 9.99 },
-    { id: 'pc-pro', name: 'PC Pro Tweaks', price: 14.99 }
-  ])
-})
-
-// ─── START SERVER ────────────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`YoJaz Elite backend running on port ${PORT}`)
-  console.log(
-    `Stripe mode: ${
-      process.env.STRIPE_SECRET_KEY?.startsWith('sk_live')
-        ? 'LIVE'
-        : 'TEST'
-    }`
-  )
-})
-// ─── Simple JSON file database ─────────────────
+// ─── Simple JSON file database ────────────────────────────────────────────────
 const DB_PATH = path.join(__dirname, 'subscriptions.json')
 
 function readDB() {
@@ -69,7 +32,7 @@ function writeDB(data) {
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2))
 }
 
-// ─── Stripe price IDs ──────────────────────────
+// ─── Stripe price IDs ─────────────────────────────────────────────────────────
 const PRICE_IDS = {
   basic: process.env.STRIPE_PRICE_BASIC,
   premium: process.env.STRIPE_PRICE_PREMIUM,
@@ -89,8 +52,21 @@ app.use(cors({
 // ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/api/health', (_, res) => res.json({ ok: true }))
 
+// ─── API test ─────────────────────────────────────────────────────────────────
+app.get('/api', (req, res) => {
+  res.json({ status: 'online', message: 'YoJaz Elite API working' })
+})
+
+// ─── Plans ────────────────────────────────────────────────────────────────────
+app.get('/api/plans', (req, res) => {
+  res.json([
+    { id: 'console', name: 'Console Tweaks', price: 4.99 },
+    { id: 'pc-basic', name: 'PC Tweaks', price: 9.99 },
+    { id: 'pc-pro', name: 'PC Pro Tweaks', price: 14.99 },
+  ])
+})
+
 // ─── Create Stripe Checkout Session ──────────────────────────────────────────
-// Called by frontend when user clicks "Subscribe"
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const { tier, userId, userEmail } = req.body
@@ -101,7 +77,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     const db = readDB()
 
-    // Reuse existing Stripe customer if we already created one for this user
     let customerId = db[userId]?.stripeCustomerId
     if (!customerId) {
       const customer = await stripe.customers.create({
@@ -134,7 +109,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
   }
 })
 
-// ─── Verify Checkout Session (called on success redirect) ────────────────────
+// ─── Verify Checkout Session ──────────────────────────────────────────────────
 app.get('/api/verify-session/:sessionId', async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.sessionId, {
@@ -186,7 +161,6 @@ app.get('/api/subscription/:userId', async (req, res) => {
     })
 
     if (!subs.data.length) {
-      // Also check canceled subs still in period
       const all = await stripe.subscriptions.list({ customer: record.stripeCustomerId, limit: 1 })
       if (!all.data.length) return res.json({ tier: null, status: 'none', renewalDate: null })
       const sub = all.data[0]
@@ -215,7 +189,6 @@ app.get('/api/subscription/:userId', async (req, res) => {
 })
 
 // ─── Create Stripe Customer Portal Session ────────────────────────────────────
-// Lets users manage billing themselves (update card, download invoices, etc.)
 app.post('/api/create-portal-session', async (req, res) => {
   try {
     const { userId } = req.body
@@ -235,7 +208,6 @@ app.post('/api/create-portal-session', async (req, res) => {
 })
 
 // ─── Cancel Subscription ──────────────────────────────────────────────────────
-// Cancels at period end (user keeps access until billing date)
 app.post('/api/cancel-subscription', async (req, res) => {
   try {
     const { userId } = req.body
@@ -308,11 +280,9 @@ app.get('/api/payment-history/:userId', async (req, res) => {
 })
 
 // ─── Stripe Webhook ───────────────────────────────────────────────────────────
-// Stripe sends events here for reliable async processing.
-// Set your webhook URL in Stripe Dashboard: https://dashboard.stripe.com/webhooks
-// Endpoint URL: https://YOUR_DOMAIN/api/webhook
-// Events to listen for: checkout.session.completed, customer.subscription.updated,
-//                        customer.subscription.deleted, invoice.payment_failed
+// Webhook URL in Stripe Dashboard: https://yojaz-elite.onrender.com/api/webhook
+// Events: checkout.session.completed, customer.subscription.updated,
+//         customer.subscription.deleted, invoice.payment_failed
 app.post('/api/webhook', (req, res) => {
   const sig = req.headers['stripe-signature']
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
@@ -376,8 +346,9 @@ app.post('/api/webhook', (req, res) => {
   res.json({ received: true })
 })
 
-// ─── Start ─────────────────────────────────────────────────────────────────────
+// ─── Start ────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`YoJaz Elite backend running on port ${PORT}`)
+  console.log(`Client URL: ${CLIENT_URL}`)
   console.log(`Stripe mode: ${process.env.STRIPE_SECRET_KEY?.startsWith('sk_live') ? 'LIVE' : 'TEST'}`)
 })

@@ -1,7 +1,9 @@
 // All calls to the Stripe backend go through this module.
 // Set VITE_API_URL in your .env to point at the backend server.
 
-const BASE = 'https://yojaz-elite.onrender.com'
+const BASE =
+  import.meta.env.VITE_API_URL ||
+  'https://yojaz-elite.onrender.com'
 
 async function post(path, body) {
   const res = await fetch(`${BASE}${path}`, {

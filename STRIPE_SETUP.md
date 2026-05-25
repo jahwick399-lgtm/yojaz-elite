@@ -69,7 +69,7 @@ You'll paste these 3 Price IDs into `server/.env` in the next step.
    STRIPE_PRICE_BASIC=price_YOUR_BASIC_PRICE_ID
    STRIPE_PRICE_PREMIUM=price_YOUR_PREMIUM_PRICE_ID
    STRIPE_PRICE_EXTREME=price_YOUR_EXTREME_PRICE_ID
-   CLIENT_URL=https://your-vercel-site.vercel.app
+   CLIENT_URL=
    PORT=3001
    ```
 
@@ -152,7 +152,7 @@ npm install
 npm run dev
 ```
 
-Open [https://your-vercel-site.vercel.app](https://your-vercel-site.vercel.app).
+Open [https://yojaz-elite-8iwbtepxm-jahwick399-lgtms-projects.vercel.app](https://yojaz-elite-8iwbtepxm-jahwick399-lgtms-projects.vercel.app).
 
 ---
 

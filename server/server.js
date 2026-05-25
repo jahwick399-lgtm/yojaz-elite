@@ -34,9 +34,9 @@ function writeDB(data) {
 
 // ─── Stripe price IDs ─────────────────────────────────────────────────────────
 const PRICE_IDS = {
-  basic: process.env.STRIPE_PRICE_BASIC,
-  premium: process.env.STRIPE_PRICE_PREMIUM,
-  extreme: process.env.STRIPE_PRICE_EXTREME,
+  basic:   process.env.STRIPE_PRICE_BASIC    || 'price_1TaOuF3jbU404iXhrQGTW9wl',
+  premium: process.env.STRIPE_PRICE_PREMIUM  || 'price_1TaOuk3jbU404iXhHNvTUbGw',
+  extreme: process.env.STRIPE_PRICE_EXTREME  || 'price_1TaOv03jbU404iXhLZzHOk96',
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────────

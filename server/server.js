@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config({ path: __dirname + '/.env' })
 const express = require('express')
 const cors = require('cors')
 const fs = require('fs')
@@ -68,7 +68,7 @@ app.get('/api/health', (_, res) => res.json({ ok: true }))
 app.get('/api', (_, res) => res.json({ status: 'online', message: 'YoJaz Elite API working' }))
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
-app.get('/api/plans', (req, res) => {
+app.get('/api/plans', (_, res) => {
   res.json([
     { id: 'console', name: 'Console Tweaks', price: 4.99 },
     { id: 'pc-basic', name: 'PC Tweaks', price: 9.99 },

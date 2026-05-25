@@ -61,7 +61,7 @@ export async function getPaymentHistory(userId) {
 // Check if the backend is reachable
 export async function checkBackendHealth() {
   try {
-    const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${BASE}/api/health`, { signal: AbortSignal.timeout(20000) })
     return res.ok
   } catch {
     return false

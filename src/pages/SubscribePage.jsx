@@ -73,10 +73,6 @@ export default function SubscribePage() {
       window.location.href = `/signup?tier=${selected}`
       return
     }
-    if (!backendOk) {
-      toast.error('Payment server is offline. See STRIPE_SETUP.md to start the backend.')
-      return
-    }
     setLoading(true)
     try {
       console.log('[Checkout] Creating session — userId:', user.id, 'email:', user.email, 'tier:', selected)
@@ -119,14 +115,13 @@ export default function SubscribePage() {
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6 flex items-start gap-3 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3"
+            className="mb-6 flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3"
           >
-            <AlertCircle size={16} className="text-red-400 flex-shrink-0 mt-0.5" />
+            <AlertCircle size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-red-300 text-sm font-semibold">Payment server is not running</p>
-              <p className="text-red-400/70 text-xs mt-0.5">
-                Start it with <code className="bg-white/10 px-1 rounded">cd server && npm install && npm run dev</code>.
-                See <code className="bg-white/10 px-1 rounded">STRIPE_SETUP.md</code> for full instructions.
+              <p className="text-amber-300 text-sm font-semibold">Payment server is warming up…</p>
+              <p className="text-amber-400/70 text-xs mt-0.5">
+                This may take a few seconds. You can still attempt checkout — it will connect automatically.
               </p>
             </div>
           </motion.div>
@@ -185,7 +180,7 @@ export default function SubscribePage() {
           <div className="flex flex-col items-center gap-3">
             <motion.button
               onClick={handleCheckout}
-              disabled={loading || backendOk === false}
+              disabled={loading}
               whileTap={{ scale: 0.97 }}
               className="btn-primary px-10 py-3.5 rounded-xl flex items-center gap-2 text-base disabled:opacity-60 disabled:cursor-not-allowed"
             >

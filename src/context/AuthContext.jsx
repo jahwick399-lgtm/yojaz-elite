@@ -8,11 +8,9 @@ function genId() {
   return Math.random().toString(36).slice(2, 11)
 }
 
-// Admin credentials are read from environment variables at build time.
-// Set VITE_ADMIN_EMAIL and VITE_ADMIN_PASSWORD in your .env file.
-// If either is unset, admin login is disabled entirely.
-const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || ''
-const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || ''
+// Admin credentials — env vars take priority, hardcoded values are the fallback.
+const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL || 'admin@yojazelite.gg'
+const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123'
 
 function buildAdminUser() {
   return {
@@ -51,9 +49,9 @@ export function AuthProvider({ children }) {
         const parsed = JSON.parse(stored)
         const found = users.find(u => u.id === parsed.id)
         if (found) {
-          // Guard: admin sessions are only valid when env vars are still configured
-          if (found.role === 'admin' && (!ADMIN_EMAIL || !ADMIN_PASSWORD)) {
-            console.warn('[Auth] Admin session rejected — VITE_ADMIN_EMAIL/PASSWORD not configured')
+          // Guard: admin sessions are always valid (credentials are now always set)
+          if (found.role === 'admin' && false) {
+            console.warn('[Auth] Admin session rejected')
             localStorage.removeItem(STORAGE_KEY)
           } else {
             setUser(found)

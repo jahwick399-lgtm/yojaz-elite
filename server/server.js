@@ -40,22 +40,26 @@ const PRICE_IDS = {
 }
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
+// cors must be first so preflight OPTIONS requests get headers before anything else
+app.use(cors({
+  origin: [
+    'https://yojaz-elite.vercel.app',
+    /\.vercel\.app$/,
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+}))
+app.options('*', cors())
+
 // Webhook route needs raw body — must be registered BEFORE express.json()
 app.use('/api/webhook', express.raw({ type: 'application/json' }))
 app.use(express.json())
-app.use(cors({
-  origin: CLIENT_URL,
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type'],
-}))
 
-// ─── Health check ─────────────────────────────────────────────────────────────
+// ─── Root + health ────────────────────────────────────────────────────────────
+app.get('/', (_, res) => res.json({ status: 'online', service: 'YoJaz Elite API', version: '1.0' }))
 app.get('/api/health', (_, res) => res.json({ ok: true }))
-
-// ─── API test ─────────────────────────────────────────────────────────────────
-app.get('/api', (req, res) => {
-  res.json({ status: 'online', message: 'YoJaz Elite API working' })
-})
+app.get('/api', (_, res) => res.json({ status: 'online', message: 'YoJaz Elite API working' }))
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 app.get('/api/plans', (req, res) => {
@@ -344,6 +348,13 @@ app.post('/api/webhook', (req, res) => {
   }
 
   res.json({ received: true })
+})
+
+// ─── Global error handler — always returns JSON, never HTML ──────────────────
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  console.error('Unhandled error:', err)
+  res.status(err.status || 500).json({ error: err.message || 'Internal server error' })
 })
 
 // ─── Start ────────────────────────────────────────────────────────────────────

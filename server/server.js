@@ -6,31 +6,73 @@ const path = require('path')
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('ERROR: STRIPE_SECRET_KEY is not set. Copy server/.env.example to server/.env and fill in your keys.')
+  console.error(
+    'ERROR: STRIPE_SECRET_KEY is not set. Copy server/.env.example to server/.env and fill in your keys.'
+  )
   process.exit(1)
 }
 
+const express = require('express')
+const fs = require('fs')
+const path = require('path')
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
-const app = express()
-const PORT = process.env.PORT || 3001
-const CLIENT_URL = process.env.CLIENT_URL || 'https://yojaz-elite-8iwbtepxm-jahwick399-lgtms-projects.vercel.app'
 
-// ─── Simple JSON file "database" ─────────────────────────────────────────────
-// Stores { [userId]: { stripeCustomerId, tier, status } }
-// Replace with a real DB (Postgres/MongoDB) for production.
+const app = express()
+
+const PORT = process.env.PORT || 10000
+
+const CLIENT_URL =
+  process.env.CLIENT_URL ||
+  'https://yojaz-elite-8iwbtepxm-jahwick399-lgtms-projects.vercel.app'
+
+app.use(express.json())
+
+// ─── API TEST ────────────────────────────────────────────────────────────────
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'online',
+    message: 'YoJaz Elite API working'
+  })
+})
+
+// ─── PLANS ───────────────────────────────────────────────────────────────────
+app.get('/api/plans', (req, res) => {
+  res.json([
+    { id: 'console', name: 'Console Tweaks', price: 4.99 },
+    { id: 'pc-basic', name: 'PC Tweaks', price: 9.99 },
+    { id: 'pc-pro', name: 'PC Pro Tweaks', price: 14.99 }
+  ])
+})
+
+// ─── START SERVER ────────────────────────────────────────────────────────────
+app.listen(PORT, () => {
+  console.log(`YoJaz Elite backend running on port ${PORT}`)
+  console.log(
+    `Stripe mode: ${
+      process.env.STRIPE_SECRET_KEY?.startsWith('sk_live')
+        ? 'LIVE'
+        : 'TEST'
+    }`
+  )
+})
+// ─── Simple JSON file database ─────────────────
 const DB_PATH = path.join(__dirname, 'subscriptions.json')
 
 function readDB() {
-  try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')) }
-  catch { return {} }
+  try {
+    return JSON.parse(fs.readFileSync(DB_PATH, 'utf8'))
+  } catch {
+    return {}
+  }
 }
+
 function writeDB(data) {
   fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2))
 }
 
-// ─── Stripe price ID map ──────────────────────────────────────────────────────
+// ─── Stripe price IDs ──────────────────────────
 const PRICE_IDS = {
-  basic:   process.env.STRIPE_PRICE_BASIC,
+  basic: process.env.STRIPE_PRICE_BASIC,
   premium: process.env.STRIPE_PRICE_PREMIUM,
   extreme: process.env.STRIPE_PRICE_EXTREME,
 }

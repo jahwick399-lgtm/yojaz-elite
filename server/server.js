@@ -4,12 +4,11 @@ const cors = require('cors')
 const fs = require('fs')
 const path = require('path')
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── Validation ─────────────────────────────────────────────
 if (!process.env.STRIPE_SECRET_KEY) {
-  console.error(
-    'ERROR: STRIPE_SECRET_KEY is not set. Copy server/.env.example to server/.env and fill in your keys.'
+  console.warn(
+    'WARNING: STRIPE_SECRET_KEY missing — running in demo mode'
   )
-  process.exit(1)
 }
 
 const express = require('express')

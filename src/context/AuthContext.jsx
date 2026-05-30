@@ -85,7 +85,9 @@ export function AuthProvider({ children }) {
           `[Auth] Subscription sync — userId=${user.id} ` +
           `serverTier=${tier} status=${status} localTier=${user.tier}`
         )
-        if (tier !== user.tier) {
+        // Never wipe a valid local tier with null — only update if server confirms a real tier
+        // or if the server confirms cancellation with an explicit non-null tier
+        if (tier !== user.tier && (tier !== null || status === 'canceled')) {
           console.log(`[Auth] Subscription sync updating local tier: ${user.tier} → ${tier}`)
           setUser(prev => {
             if (!prev) return prev

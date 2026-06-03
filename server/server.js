@@ -67,6 +67,119 @@ app.get('/', (_, res) => res.json({ status: 'online', service: 'YoJaz Elite API'
 app.get('/api/health', (_, res) => res.json({ ok: true }))
 app.get('/api', (_, res) => res.json({ status: 'online', message: 'YoJaz Elite API working' }))
 
+// ─── User auth store (file-persisted) ────────────────────────────────────────
+const USERS_FILE = path.join(__dirname, 'users.json')
+let authUsers = {}
+try {
+  if (fs.existsSync(USERS_FILE)) {
+    authUsers = JSON.parse(fs.readFileSync(USERS_FILE, 'utf8'))
+    console.log(`[startup] Loaded ${Object.keys(authUsers).length} users from users.json`)
+  }
+} catch (e) { console.error('[startup] users.json load error:', e.message); authUsers = {} }
+
+function persistAuthUsers() {
+  try { fs.writeFileSync(USERS_FILE, JSON.stringify(authUsers, null, 2)) }
+  catch (e) { console.error('[persist] Failed to save users.json:', e.message) }
+}
+
+const ADMIN_EMAIL_ENV = process.env.VITE_ADMIN_EMAIL || 'admin@yojazelite.gg'
+const ADMIN_PASS_ENV  = process.env.VITE_ADMIN_PASSWORD || 'admin123'
+const THIRTY_DAYS     = 30 * 24 * 60 * 60 * 1000
+
+function genId() { return Math.random().toString(36).slice(2, 11) }
+
+// ─── Auth endpoints ───────────────────────────────────────────────────────────
+
+app.post('/api/auth/signup', (req, res) => {
+  const { email, password, username } = req.body
+  if (!email || !password || !username) return res.json({ success: false, error: 'Email, password, and username required.' })
+  const key = email.trim().toLowerCase()
+  if (authUsers[key]) return res.json({ success: false, error: 'An account with this email already exists.' })
+  if (Object.values(authUsers).find(u => u.username?.toLowerCase() === username.trim().toLowerCase()))
+    return res.json({ success: false, error: 'Username is already taken.' })
+  const now = Date.now()
+  authUsers[key] = {
+    id: genId(), email: key, password: password.trim(),
+    username: username.trim(), tier: null, role: 'user',
+    createdAt: now, subscriptionActive: false,
+  }
+  persistAuthUsers()
+  console.log(`[auth/signup] ${key} username=${username} — total: ${Object.keys(authUsers).length}`)
+  const { password: _, ...safe } = authUsers[key]
+  res.json({ success: true, user: safe })
+})
+
+app.post('/api/auth/login', (req, res) => {
+  const { email, password } = req.body
+  if (!email || !password) return res.json({ success: false, error: 'Email and password required.' })
+  const key = email.trim().toLowerCase()
+  console.log(`[auth/login] ${key} — known: ${Object.keys(authUsers).length} users`)
+  if (key === ADMIN_EMAIL_ENV.toLowerCase() && password.trim() === ADMIN_PASS_ENV)
+    return res.json({ success: true, user: { id: 'admin', email: key, username: 'Admin', tier: 'extreme', role: 'admin' } })
+  const u = authUsers[key]
+  if (!u) return res.json({ success: false, error: 'No account found with that email.' })
+  if (u.password !== password.trim()) return res.json({ success: false, error: 'Incorrect password. Try again.' })
+  const { password: _, ...safe } = u
+  console.log(`[auth/login] success: ${key} tier=${u.tier}`)
+  res.json({ success: true, user: safe })
+})
+
+app.post('/api/auth/get-user', (req, res) => {
+  const { email, id } = req.body
+  const key = email?.trim().toLowerCase()
+  console.log(`[auth/get-user] ${key || id} — total: ${Object.keys(authUsers).length}`)
+  if (key === ADMIN_EMAIL_ENV.toLowerCase())
+    return res.json({ success: true, user: { id: 'admin', email: key, username: 'Admin', tier: 'extreme', role: 'admin' } })
+  const u = key ? authUsers[key] : Object.values(authUsers).find(u => u.id === id)
+  if (!u) { console.log(`[auth/get-user] NOT FOUND: ${key || id}`); return res.json({ success: false }) }
+  const { password: _, ...safe } = u
+  res.json({ success: true, user: safe })
+})
+
+app.post('/api/auth/update-tier', (req, res) => {
+  const { email, userId, tier, stripeSessionId } = req.body
+  const key = email?.trim().toLowerCase() || Object.keys(authUsers).find(k => authUsers[k].id === userId)
+  if (!key || !authUsers[key]) return res.json({ success: false, error: 'User not found.' })
+  const now = Date.now()
+  authUsers[key].tier = tier
+  authUsers[key].subscriptionActive = true
+  authUsers[key].subscriptionStart = now
+  authUsers[key].subscriptionEnd = now + THIRTY_DAYS
+  authUsers[key].paidAt = now
+  if (stripeSessionId) authUsers[key].stripeSessionId = stripeSessionId
+  persistAuthUsers()
+  console.log(`[auth/update-tier] ${key} → ${tier}`)
+  res.json({ success: true })
+})
+
+app.get('/api/auth/admin/users', (req, res) => {
+  if (req.query.adminEmail?.toLowerCase() !== ADMIN_EMAIL_ENV.toLowerCase())
+    return res.status(401).json({ error: 'Unauthorized' })
+  res.json({ success: true, users: Object.values(authUsers).map(({ password: _, ...u }) => u) })
+})
+
+app.post('/api/auth/admin/update-user', (req, res) => {
+  if (req.body.adminEmail?.toLowerCase() !== ADMIN_EMAIL_ENV.toLowerCase())
+    return res.status(401).json({ error: 'Unauthorized' })
+  const { email, userId, tier, action } = req.body
+  const key = email?.trim().toLowerCase() || Object.keys(authUsers).find(k => authUsers[k].id === userId)
+  if (!key || !authUsers[key]) return res.json({ success: false, error: 'User not found.' })
+  const now = Date.now()
+  if (action === 'extend') {
+    const base = authUsers[key].subscriptionEnd && authUsers[key].subscriptionEnd > now ? authUsers[key].subscriptionEnd : now
+    authUsers[key].subscriptionEnd = base + THIRTY_DAYS; authUsers[key].subscriptionActive = true
+  } else if (action === 'lifetime') {
+    authUsers[key].subscriptionEnd = new Date('2099-01-01').getTime(); authUsers[key].subscriptionActive = true
+  } else if (action === 'reset') {
+    authUsers[key].tier = null; authUsers[key].subscriptionActive = false
+  } else if (tier) {
+    authUsers[key].tier = tier
+    if (tier) { authUsers[key].subscriptionEnd = now + THIRTY_DAYS; authUsers[key].subscriptionActive = true }
+  }
+  persistAuthUsers()
+  res.json({ success: true })
+})
+
 // ─── Plans ────────────────────────────────────────────────────────────────────
 app.get('/api/plans', (_, res) => {
   res.json([
